@@ -72,7 +72,8 @@ public static class Utils {
             if(Safe(w?.Value, report[i], ref sign))
             {
                 q.AddLast(report[i]);
-                w = w.Next;
+                if(w is not null)
+                    w = w!.Next;
                 i += 1;
                 continue;
             }
