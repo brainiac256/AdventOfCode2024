@@ -14,14 +14,14 @@ SMSMSASXSS
 SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX";
-        //Xword puzzle = new Xword(test);
+        //Xword puzzle = new Xword(test, true);
 
         using StreamReader r = new("input.txt");
         string p = r.ReadToEnd();
         Xword puzzle = new Xword(p, false); // change slowmode to true to watch the whole thing, SLOWLY.
         var d = AnsiConsole.Live(new Text("Starting...")).AutoClear(false);
         AnsiConsole.Clear();
-        Task res = d.StartAsync(puzzle.SolvePt1);
+        Task res = d.StartAsync(puzzle.SolvePt2);
         res.Wait();
         AnsiConsole.WriteLine();
         AnsiConsole.Write(new Rule());
@@ -66,6 +66,7 @@ public class Xword {
     }
     public async Task SolvePt1(LiveDisplayContext ctx) {
         _total = null;
+        Success = false;
         if(_slow) Draw(ctx);
         if(_slow) await Task.Delay(50);
         for(int x = 0; x < height; x++) {
@@ -145,6 +146,7 @@ public class Xword {
             }
             Draw(ctx);
         }
+        Success = true;
         if(_slow) await Task.Delay(50);
         for(int x = 0; x < height; x++) {
             for(int y = 0; y < width; y++) {
@@ -154,7 +156,56 @@ public class Xword {
         }
         Draw(ctx);
     }
-
+    public async Task SolvePt2(LiveDisplayContext ctx) {
+        _total = null;
+        Success = false;
+        Draw(ctx);
+        if(_slow) await Task.Delay(50);
+        for(int x = 0; x < height; x++) {
+            for(int y = 0; y < width; y++) {
+                if(At(x,y) == 'A') SetColor(x,y,Color.Aqua);
+            }
+        }
+        Draw(ctx);
+        _total = 0;
+        for(int x = 0; x < height; x++) {
+            for(int y = 0; y < width; y++) {
+                char c = At(x,y);
+                if(c != 'A') continue;
+                SetColor(x,y, Color.Red);
+                if(_slow) Draw(ctx);
+                if(_slow) await Task.Delay(50);
+                SetColor(x,y, Color.Grey);
+                
+                // check for MAS in cross configurations
+                // M.S   M.M   S.M   S.S 
+                // .A.   .A.   .A.   .A. 
+                // M.S   S.S   S.M   M.M 
+                if((At(x-1,y-1) == 'M' && At(x+1,y+1)=='S') ||
+                   (At(x-1,y-1) == 'S' && At(x+1,y+1)=='M') ){
+                    if((At(x-1,y+1) == 'M' && At(x+1,y-1) == 'S') ||
+                       (At(x-1,y+1) == 'S' && At(x+1,y-1) == 'M')){
+                        _total +=1;
+                        SetColor(x,y,Color.Lime);
+                        SetColor(x-1,y-1,Color.DarkGreen);
+                        SetColor(x-1,y+1,Color.DarkGreen);
+                        SetColor(x+1,y-1,Color.DarkGreen);
+                        SetColor(x+1,y+1,Color.DarkGreen);
+                    }
+                }
+            }
+            Draw(ctx);
+        }
+        Success = true;
+        if(_slow) await Task.Delay(50);
+        for(int x = 0; x < height; x++) {
+            for(int y = 0; y < width; y++) {
+                Color? z = ColorAt(x,y);
+                if(z is not null && z.Equals(Color.Grey)) SetPosition(x,y,'.', Color.Grey);
+            }
+        }
+        Draw(ctx);
+    }
     private void Draw(LiveDisplayContext ctx) {
         var _display = new Grid();
         foreach(var spot in letterGrid[0]){
